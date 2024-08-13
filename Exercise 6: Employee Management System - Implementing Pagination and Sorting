@@ -1,0 +1,135 @@
+1. Pagination
+a. Implementing Pagination for the Employee List
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    
+    Page<Employee> findAll(Pageable pageable);
+}
+
+Example: Adding Pagination in EmployeeController:
+package com.example.EmployeeManagementSystem.controller;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    
+    @GetMapping("/paged")
+    public Page<Employee> getEmployeesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return employeeRepository.findAll(pageable);
+    }
+}
+
+2. Sorting
+a. Adding Sorting Functionality to our Queries
+
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+   
+    List<Employee> findAll(Sort sort);
+}
+
+Example: Adding Sorting in EmployeeController:
+package com.example.EmployeeManagementSystem.controller;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    // Get a sorted list of employees
+    @GetMapping("/sorted")
+    public List<Employee> getEmployeesSorted(
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
+        return employeeRepository.findAll(sort);
+    }
+}
+
+b. Combining Pagination and Sorting
+
+package com.example.EmployeeManagementSystem.controller;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    
+    public Page<Employee> getEmployeesPagedAndSorted(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction), sortBy));
+        return employeeRepository.findAll(pageable);
+    }
+}
+
+
+
+
