@@ -1,0 +1,122 @@
+1. Spring Boot Auto-Configuration for Data Sources
+Spring Boot provides auto-configuration for setting up a data source with minimal configuration. However, we can customize this behavior if needed.
+
+Step 1: Default Data Source Configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+2. Externalizing Configuration with application.properties
+Step 1: Use Profiles for Different Environments
+Example: application-dev.properties
+spring.datasource.url=jdbc:h2:mem:devdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+Example: application-prod.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/employeedb
+spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver
+spring.datasource.username=root
+spring.datasource.password=prodpassword
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+3. Managing Multiple Data Sources
+Step 1: Define Multiple Data Sources in application.properties
+
+spring.datasource.primary.url=jdbc:h2:mem:primarydb
+spring.datasource.primary.driverClassName=org.h2.Driver
+spring.datasource.primary.username=sa
+spring.datasource.primary.password=password
+spring.jpa.primary.database-platform=org.hibernate.dialect.H2Dialect
+
+
+spring.datasource.secondary.url=jdbc:mysql://localhost:3306/departmentdb
+spring.datasource.secondary.driverClassName=com.mysql.cj.jdbc.Driver
+spring.datasource.secondary.username=root
+spring.datasource.secondary.password=prodpassword
+spring.jpa.secondary.database-platform=org.hibernate.dialect.MySQLDialect
+
+Step 2: Configure Data Sources in Java
+package com.example.EmployeeManagementSystem.config;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
+
+@Configuration
+@EnableJpaRepositories(
+    basePackages = "com.example.EmployeeManagementSystem.repository.primary",
+    entityManagerFactoryRef = "primaryEntityManagerFactory",
+    transactionManagerRef = "primaryTransactionManager"
+)
+public class PrimaryDataSourceConfig {
+
+    @Bean(name = "primaryDataSource")
+    public DataSource primaryDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    @Bean(name = "primaryEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
+            EntityManagerFactoryBuilder builder,
+            @Qualifier("primaryDataSource") DataSource dataSource) {
+        return builder
+                .dataSource(dataSource)
+                .packages("com.example.EmployeeManagementSystem.entity.primary")
+                .persistenceUnit("primary")
+                .build();
+    }
+
+    @Bean(name = "primaryTransactionManager")
+    public PlatformTransactionManager primaryTransactionManager(
+            @Qualifier("primaryEntityManagerFactory") LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory) {
+        return new JpaTransactionManager(primaryEntityManagerFactory.getObject());
+    }
+}
+
+Repeat the same for the secondary data source:
+@Configuration
+@EnableJpaRepositories(
+    basePackages = "com.example.EmployeeManagementSystem.repository.secondary",
+    entityManagerFactoryRef = "secondaryEntityManagerFactory",
+    transactionManagerRef = "secondaryTransactionManager"
+)
+public class SecondaryDataSourceConfig {
+
+    @Bean(name = "secondaryDataSource")
+    public DataSource secondaryDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    @Bean(name = "secondaryEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory(
+            EntityManagerFactoryBuilder builder,
+            @Qualifier("secondaryDataSource") DataSource dataSource) {
+        return builder
+                .dataSource(dataSource)
+                .packages("com.example.EmployeeManagementSystem.entity.secondary")
+                .persistenceUnit("secondary")
+                .build();
+    }
+
+    @Bean(name = "secondaryTransactionManager")
+    public PlatformTransactionManager secondaryTransactionManager(
+            @Qualifier("secondaryEntityManagerFactory") LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory) {
+        return new JpaTransactionManager(secondaryEntityManagerFactory.getObject());
+    }
+}
+
+
+
+
