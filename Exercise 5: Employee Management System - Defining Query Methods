@@ -1,0 +1,124 @@
+1. Defining Query Methods
+In this exercise, you'll enhance your EmployeeRepository and DepartmentRepository to support custom queries. You'll define methods that use keywords in their names for query derivation and implement more complex custom queries using the @Query annotation.
+
+a. Using Keywords in Method Names to Create Custom Query Methods
+
+Spring Data JPA allows you to create custom query methods by using specific keywords in the method names. These methods are automatically translated into queries by Spring Data.
+
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    
+    List<Employee> findByDepartmentName(String departmentName);
+
+    
+    List<Employee> findByNameContaining(String keyword);
+
+    
+    List<Employee> findByEmailEndingWith(String domain);
+
+   
+    List<Employee> findByDepartmentIdOrderByName(Long departmentId);
+}
+
+b. Implementing Custom Query Methods Using the @Query Annotation
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Department;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface DepartmentRepository extends JpaRepository<Department, Long> {
+
+    
+    @Query("SELECT d FROM Department d WHERE d.name LIKE %:name%")
+    List<Department> findDepartmentsByNameContaining(@Param("name") String name);
+
+    
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.department.id = :departmentId")
+    Long countEmployeesInDepartment(@Param("departmentId") Long departmentId);
+
+    
+    @Query("SELECT d FROM Department d WHERE SIZE(d.employees) >= :minEmployees")
+    List<Department> findDepartmentsWithMinEmployees(@Param("minEmployees") int minEmployees);
+}
+
+2. Named Queries
+a. Defining Named Queries
+
+Named queries are pre-defined queries that can be reused across your application. You can define them in the entity class using the @NamedQuery or @NamedQueries annotation.
+package com.example.EmployeeManagementSystem.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "employees")
+@NamedQueries({
+    @NamedQuery(
+        name = "Employee.findByDepartmentId",
+        query = "SELECT e FROM Employee e WHERE e.department.id = :departmentId"
+    ),
+    @NamedQuery(
+        name = "Employee.findByEmailDomain",
+        query = "SELECT e FROM Employee e WHERE e.email LIKE CONCAT('%', :domain)"
+    )
+})
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private String email;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
+}
+
+b. Executing Named Queries
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    
+    @Query(name = "Employee.findByDepartmentId")
+    List<Employee> findEmployeesByDepartmentId(@Param("departmentId") Long departmentId);
+
+    
+    @Query(name = "Employee.findByEmailDomain")
+    List<Employee> findEmployeesByEmailDomain(@Param("domain") String domain);
+}
+
