@@ -1,0 +1,55 @@
+1. Creating a Spring Boot Project
+To start, we will create a new Spring Boot project using your preferred IDE or the Spring Initializr website. Follow these steps:
+
+a. Using Spring Initializr Website:
+
+Open Spring Initializr.
+
+Set the project metadata:
+
+Project: Maven Project
+Language: Java
+Spring Boot: Choose the latest stable version (e.g., 3.0.0).
+Group: com.example
+Artifact: EmployeeManagementSystem
+Name: EmployeeManagementSystem
+Package Name: com.example.EmployeeManagementSystem
+Packaging: Jar
+Java Version: 17 or above
+Add the following dependencies:
+
+Spring Data JPA
+H2 Database
+Spring Web
+Lombok
+Click on Generate to download the project as a zip file.
+
+b. Using IDE (e.g., IntelliJ IDEA or Eclipse):
+
+Open your IDE.
+Create a new Spring Boot project with the following settings:
+Project Name: EmployeeManagementSystem
+Group: com.example
+Artifact: EmployeeManagementSystem
+Package Name: com.example.EmployeeManagementSystem
+Java Version: 17 or above
+Add the necessary dependencies (Spring Data JPA, H2 Database, Spring Web, Lombok) via Maven or Gradle.
+
+2. Configuring Application Properties
+
+Next, we will configure the application.properties file to set up the H2 database connection.
+
+a. Locate the application.properties file:
+
+In our project, navigate to src/main/resources/application.properties.
+
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+# Enable H2 Console
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
