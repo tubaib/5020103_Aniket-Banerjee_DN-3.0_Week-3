@@ -1,0 +1,86 @@
+1. Projections Overview
+Projections in Spring Data JPA allow us to select specific columns from an entity, rather than retrieving the entire entity. This can be done using either:
+
+Interface-based projections
+Class-based projections
+
+2. Defining Interface-based Projections
+package com.example.EmployeeManagementSystem.projection;
+
+public interface EmployeeNameAndDepartment {
+
+    String getName();
+
+    String getDepartmentName();
+}
+
+Step 1: Use Interface-based Projection in Repository
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.projection.EmployeeNameAndDepartment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    List<EmployeeNameAndDepartment> findByDepartmentName(String departmentName);
+}
+
+3. Defining Class-based Projections
+package com.example.EmployeeManagementSystem.projection;
+
+public class EmployeeNameAndDepartmentDTO {
+
+    private final String name;
+    private final String departmentName;
+
+    public EmployeeNameAndDepartmentDTO(String name, String departmentName) {
+        this.name = name;
+        this.departmentName = departmentName;
+    }
+
+   
+    public String getName() {
+        return name;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+}
+
+Step 1: Use Class-based Projection in Repository
+package com.example.EmployeeManagementSystem.repository;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.projection.EmployeeNameAndDepartmentDTO;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
+    @Query("SELECT new com.example.EmployeeManagementSystem.projection.EmployeeNameAndDepartmentDTO(e.name, d.name) " +
+           "FROM Employee e JOIN e.department d WHERE d.name = :departmentName")
+    List<EmployeeNameAndDepartmentDTO> findEmployeeNameAndDepartmentByDepartmentName(String departmentName);
+}
+
+. Using @Value and Constructor Expressions
+Step 1: Use @Value in Interface-based Projections
+package com.example.EmployeeManagementSystem.projection;
+
+import org.springframework.beans.factory.annotation.Value;
+
+public interface EmployeeCustomProjection {
+
+    @Value("#{target.name + ' works in ' + target.department.name}")
+    String getEmployeeDetails();
+}
+
