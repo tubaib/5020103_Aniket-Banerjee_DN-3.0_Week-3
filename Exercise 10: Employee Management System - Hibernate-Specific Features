@@ -1,0 +1,94 @@
+1. Hibernate-Specific Annotations
+Step 1: Use Hibernate-Specific Annotations
+package com.example.EmployeeManagementSystem.entity;
+
+import org.hibernate.annotations.Type;
+
+import javax.persistence.*;
+import java.util.UUID;
+
+@Entity
+@Table(name = "employee")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @Column(name = "employee_name")
+    private String name;
+
+    @Type(type = "uuid-char")
+    @Column(name = "employee_code", unique = true, nullable = false)
+    private UUID employeeCode;
+
+   
+}
+
+Example: @Formula
+package com.example.EmployeeManagementSystem.entity;
+
+import org.hibernate.annotations.Formula;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.Period;
+
+@Entity
+@Table(name = "employee")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Formula("(year(current_date) - year(birth_date))")
+    private int age;
+
+    
+}
+
+2. Configuring Hibernate Dialect and Properties
+Step 1: Configure Hibernate Dialect
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+
+Step 2: Configure Additional Hibernate Properties
+spring.jpa.properties.hibernate.jdbc.batch_size=50
+spring.jpa.properties.hibernate.order_inserts=true
+spring.jpa.properties.hibernate.order_updates=true
+
+3. Batch Processing with Hibernate
+Implement Batch Processing in Code
+Example: Batch Insert Employees
+package com.example.EmployeeManagementSystem.service;
+
+import com.example.EmployeeManagementSystem.entity.Employee;
+import com.example.EmployeeManagementSystem.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Transactional
+    public void saveEmployeesInBatch(List<Employee> employees) {
+        for (int i = 0; i < employees.size(); i++) {
+            employeeRepository.save(employees.get(i));
+            if (i % 50 == 0) { // Flush a batch of inserts and release memory.
+                employeeRepository.flush();
+                employeeRepository.clear();
+            }
+        }
+    }
+}
+
+
